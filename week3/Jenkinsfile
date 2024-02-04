@@ -1,1 +1,10 @@
-echo "this is the TEST branch"
+pipeline {
+    agent any
+    stages {
+        stage('build') {
+            steps {
+                sh 'this is the TEST branch'
+            }
+        }
+    }
+}
