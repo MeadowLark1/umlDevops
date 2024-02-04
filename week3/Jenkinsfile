@@ -1,1 +1,10 @@
-echo "this is the main branch"
+pipeline {
+    agent any
+    stages {
+        stage('build') {
+            steps {
+                sh 'this is the main branch'
+            }
+        }
+    }
+}
