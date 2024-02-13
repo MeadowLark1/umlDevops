@@ -9,7 +9,7 @@ podTemplate(containers: [
   
   volumes: [
   persistentVolumeClaim(
-      mountPath: '/root/.m2/https://github.com/MeadowLark1/umlDevops', 
+      mountPath: '/var/jenkins_home', 
       claimName: 'maven-repo-storage', 
       readOnly: false
       )
