@@ -23,12 +23,28 @@ pipeline {
         """
       }
     }
-
+     stage("Unit test") {
+        steps {
+            sh ""
+			  cd Chapter08/sample1
+			  ./gradlew test
+			""
+        }
+    }
+     stage("Code coverage") {
+        steps {
+			sh """
+			  cd Chapter08/sample1
+			  ./gradlew jacocoTestReport
+              ./gradlew jacocoTestCoverageVerification
+			"""
+        }
+    }
     stage('Run tests and generate reports') {
       steps {
         sh """
           cd Chapter08/sample1
-          ./gradlew jacocoTestCoverageVerification
+          ./gradlew test
           ./gradlew jacocoTestReport
         """
         publishHTML (
