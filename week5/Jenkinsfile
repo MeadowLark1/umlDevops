@@ -34,21 +34,16 @@ pipeline {
       }
     }
 	
-	stage('JaCoCo checkstyle test') {
-	  steps {
-	    sh """
-          cd Chapter08/sample1
-          ./gradlew checkstyleMain
-          ./gradlew jacocoTestReport
-        """
-		publishHTML (
-          target: [
-            reportDir: 'Chapter08/sample1/build/reports/tests/test',
-            reportFiles: 'index.html',
-            reportName: "JaCoCo Report"
-          ]
-        )
-	  }	
-	}	
+stage("Code coverage") {
+     steps {
+          sh "./gradlew jacocoTestReport"
+          publishHTML (target: [
+               reportDir: 'build/reports/jacoco/test/html',
+               reportFiles: 'index.html',
+               reportName: "JaCoCo Report"
+         ])
+          sh "./gradlew jacocoTestCoverageVerification"
+     }
+    }
   }
 }
