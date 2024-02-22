@@ -24,21 +24,31 @@ pipeline {
       }
     }
 
-    stage('Run tests and generate reports') {
+    stage('jacocoTestCoverageVerification') {
       steps {
         sh """
           cd Chapter08/sample1
           ./gradlew test
           ./gradlew jacocoTestCoverageVerification
+        """  
+      }
+    }
+	
+	stage('JaCoCo checkstyle test') {
+	  steps {
+	    sh """
+          cd Chapter08/sample1
+          ./gradlew checkstyleMain
+          ./gradlew jacocoTestReport
         """
-        publishHTML (
+		publishHTML (
           target: [
             reportDir: 'Chapter08/sample1/build/reports/tests/test',
             reportFiles: 'index.html',
             reportName: "JaCoCo Report"
           ]
         )
-      }
-    }
+	  }	
+	}	
   }
 }
