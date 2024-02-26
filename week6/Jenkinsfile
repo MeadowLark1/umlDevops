@@ -1,37 +1,58 @@
+// This example uses Jenkin's "declarative" syntax
+//This file points to the other repo that has the code from the textbook using gradle 
+
 pipeline {
   agent {
     kubernetes {
-      // Define the pod template with container template
+      // Define the pod template directly within the kubernetes agent
       containerTemplate {
-            name 'gradle'
-            image 'gradle'
-            command 'sleep'
-            args '30d'
-        }
+        name 'gradle'
+        image 'gradle'
+        command 'sleep'
+        args '30d'
+      }
     }
   }
-  
+
   stages {
     stage('Checkout code and prepare environment') {
       steps {
-        git url: 'https://github.com/dlambrig/Continuous-Delivery-with-Docker-and-Jenkins-Second-Edition.git', branch: 'master'
+        git url: 'https://github.com/MeadowLark1/Continuous-Delivery-with-Docker-and-Jenkins-Second-Edition.git', branch: 'master'
         sh """
           cd Chapter08/sample1
           chmod +x gradlew
         """
       }
     }
-    stage('Run pipeline against a gradle project - test branch') {
-      when {
-        not { branch 'main' }
-      }
+
+    stage('jacocoTestCoverageVerification') {
+	   when {
+	       branch "dev-*"
+	   }
       steps {
-         echo 'Unit test not main branch'
-         sh """
-           cd Chapter08/sample1; 
-           ./gradlew test
-         """
+        sh """
+          cd Chapter08/sample1
+          ./gradlew test
+          ./gradlew jacocoTestCoverageVerification
+        """  
       }
     }
+	
+	stage('JaCoCo checkstyle test') {
+	  steps {
+	    sh """
+          cd Chapter08/sample1
+          ./gradlew jacocoTestReport
+          ./gradlew checkstyleMain
+        """
+		publishHTML (
+          target: [
+            reportDir: 'Chapter08/sample1/build/reports/tests/test',
+            reportFiles: 'index.html',
+            reportName: "JaCoCo Report"
+          ]
+        )
+	  }	
+	}	
   }
 }
