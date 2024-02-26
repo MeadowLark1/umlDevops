@@ -1,4 +1,5 @@
 // This example uses Jenkin's "declarative" syntax
+//This file points to the other repo that has the code from the textbook using gradle 
 
 pipeline {
   agent {
