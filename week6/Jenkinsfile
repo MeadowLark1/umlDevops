@@ -27,7 +27,7 @@ pipeline {
 
     stage('jacocoTestCoverageVerification') {
 	   when {
-	       branch "dev-*"
+	       branch "main"
 	   }
       steps {
         sh """
@@ -39,7 +39,10 @@ pipeline {
     }
 	
 	stage('JaCoCo checkstyle test') {
-	  steps {
+	  when {
+	       branch "dev-*"
+	   }
+    steps {
 	    sh """
           cd Chapter08/sample1
           ./gradlew jacocoTestReport
