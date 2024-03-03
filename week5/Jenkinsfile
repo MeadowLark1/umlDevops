@@ -26,9 +26,6 @@ pipeline {
     }
 
     stage('jacocoTestCoverageVerification') {
-	   when {
-	       branch "main"
-	   }
       steps {
         sh """
           cd Chapter08/sample1
@@ -39,16 +36,19 @@ pipeline {
     }
 	
 	stage('JaCoCo checkstyle test') {
-	  when {
-	       branch "dev-*"
-	   }
-    steps {
+	  steps {
 	    sh """
           cd Chapter08/sample1
           ./gradlew jacocoTestReport
           ./gradlew checkstyleMain
         """
-        
+		publishHTML (
+          target: [
+            reportDir: 'Chapter08/sample1/build/reports/tests/test',
+            reportFiles: 'index.html',
+            reportName: "JaCoCo Report"
+          ]
+        )
 	  }	
 	}	
   }
