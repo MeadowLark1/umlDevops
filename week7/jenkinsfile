@@ -1,0 +1,71 @@
+// This example uses Jenkin's "declarative" syntax
+//This file points to the other repo that has the code from the textbook using gradle 
+
+pipeline {
+  agent {
+    kubernetes {
+      // Define the pod template directly within the kubernetes agent
+      containerTemplate {
+        name 'gradle'
+        image 'gradle'
+        command 'sleep'
+        args '30d'
+      }
+    }
+  }
+
+  stages {
+    stage('Checkout code and prepare environment') {
+      steps {
+        git url: 'https://github.com/MeadowLark1/Continuous-Delivery-with-Docker-and-Jenkins-Second-Edition.git', branch: 'master'
+        sh """
+          cd Chapter08/sample1
+          chmod +x gradlew
+        """
+      }
+    }
+
+    stage('jacocoTestCoverageVerification') {
+	   when {
+	       branch "main"
+	   }
+      steps {
+        sh """
+          cd Chapter08/sample1
+          ./gradlew test
+          ./gradlew jacocoTestCoverageVerification
+        """  
+      }
+    }
+	
+	stage('JaCoCo checkstyle test') {
+	  when {
+	       branch "dev-*"
+		   //not { branch 'main' }	
+	   }
+    steps {
+	    sh """
+          cd Chapter08/sample1
+          ./gradlew jacocoTestReport
+          ./gradlew checkstyleMain
+        """
+        publishHTML (target: [
+          reportDir: 'Chapter08/sample1/build/reports/checkstyle',
+          reportFiles: 'main.html',
+          reportName: "JaCoCo Checkstyle"
+        ]) 
+	  }	
+	}	
+  }
+   post {
+    always {
+      echo 'pipeline complete.'
+    }
+    success {
+      echo 'tests pass!'
+    }
+    failure {
+      echo 'tests fail!'
+    }
+  }
+}
