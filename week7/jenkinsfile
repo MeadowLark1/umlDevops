@@ -48,7 +48,6 @@ pipeline {
           cd Chapter08/sample1
           ./gradlew jacocoTestReport
           ./gradlew checkstyleMain
-          Exit 1
         """
         publishHTML (target: [
           reportDir: 'Chapter08/sample1/build/reports/checkstyle',
