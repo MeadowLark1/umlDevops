@@ -1,4 +1,4 @@
-// This example uses Jenkin's "declarative" syntax
+// "declarative" syntax
 //This file points to the other repo that has the code from the textbook using gradle 
 
 pipeline {
@@ -40,7 +40,7 @@ pipeline {
 	
 	stage('JaCoCo checkstyle test') {
 	  when {
-	       branch "dev-*"
+	       branch "feature-*"
 		   //not { branch 'main' }	
 	   }
     steps {
