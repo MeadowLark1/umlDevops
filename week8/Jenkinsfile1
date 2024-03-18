@@ -1,43 +1,5 @@
-// "declarative" syntax
-//This file points to the other repo that has the code from the textbook using gradle 
 
-pipeline {
-  agent {
-    kubernetes {
-      // Define the pod template directly within the kubernetes agent
-      containerTemplate {
-        name 'gradle'
-        image 'gradle'
-        command 'sleep'
-        args '30d'
-      }
-    }
-  }
 
-  stages {
-    stage('Checkout code and prepare environment') {
-      steps {
-        git url: 'https://github.com/MeadowLark1/Continuous-Delivery-with-Docker-and-Jenkins-Second-Edition.git', branch: 'master'
-        sh """
-          cd Chapter08/sample1
-          chmod +x gradlew
-        """
-      }
-    }
-
-    stage('jacocoTestCoverageVerification') {
-	   when {
-	       branch "main"
-	   }
-      steps {
-        sh """
-          cd Chapter08/sample1
-          ./gradlew test
-          ./gradlew jacocoTestCoverageVerification
-        """  
-      }
-	  
-//only run in Main branch as that is where successful code is merged. 
 podTemplate(yaml: '''
     apiVersion: v1
     kind: Pod
@@ -95,6 +57,9 @@ podTemplate(yaml: '''
     }
 
     stage('Build Java Image') {
+	  when {
+	       branch "main"
+	   }
       container('kaniko') {
         stage('Build a gradle project') {
           sh '''
@@ -107,15 +72,21 @@ podTemplate(yaml: '''
         }
       }
     }
-
-  }
-}
+    stage('jacocoTestCoverageVerification') {
+	   when {
+	       branch "main"
+	   }
+      steps {
+        sh """
+          cd Chapter08/sample1
+          ./gradlew test
+          ./gradlew jacocoTestCoverageVerification
+        """  
+      }
     }
-	
 	stage('JaCoCo checkstyle test') {
 	  when {
-	       branch "feature-*"
-		   //not { branch 'main' }	
+		   not { branch 'main' }	
 	   }
     steps {
 	    sh """
@@ -129,9 +100,9 @@ podTemplate(yaml: '''
           reportName: "JaCoCo Checkstyle"
         ]) 
 	  }	
-	}	
+	}		
   }
-   post {
+    post {
     always {
       echo 'pipeline complete.'
     }
