@@ -1,5 +1,4 @@
-// "declarative" syntax
-//This file points to the other repo that has the code from the textbook using gradle 
+//This file is a script in "some language" to do stuff with a pipeline.
 
 pipeline {
   agent {
@@ -102,7 +101,7 @@ podTemplate(yaml: '''
           echo 'COPY ./calculator-0.0.1-SNAPSHOT.jar app.jar' >> Dockerfile
           echo 'ENTRYPOINT ["java", "-jar", "app.jar"]' >> Dockerfile
           mv /mnt/calculator-0.0.1-SNAPSHOT.jar .
-          /kaniko/executor --context `pwd` --destination meadowlark1/hello-kaniko:1.0
+          /kaniko/executor --context `pwd` --destination meadowlark1/new-kaniko:2.0
           '''
         }
       }
