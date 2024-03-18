@@ -34,18 +34,12 @@ pipeline {
           ./gradlew test
           ./gradlew jacocoTestCoverageVerification
         """  
-<<<<<<< HEAD
 	  success {
       echo 'tests pass!'
     }
     failure {
       echo 'tests fail!'
-    }
-	
-=======
-      }
-	  
->>>>>>> 434852ff392e8d08742ead60cca5b6eab14828be
+    }	
 //only run in Main branch as that is where successful code is merged. 
 podTemplate(yaml: '''
     apiVersion: v1
@@ -111,20 +105,12 @@ podTemplate(yaml: '''
           echo 'COPY ./calculator-0.0.1-SNAPSHOT.jar app.jar' >> Dockerfile
           echo 'ENTRYPOINT ["java", "-jar", "app.jar"]' >> Dockerfile
           mv /mnt/calculator-0.0.1-SNAPSHOT.jar .
-<<<<<<< HEAD
           /kaniko/executor --context `pwd` --destination meadowlark1/hello-kaniko:1.0
-=======
-          /kaniko/executor --context `pwd` --destination meadowlark1/new-kaniko:2.0
->>>>>>> 434852ff392e8d08742ead60cca5b6eab14828be
           '''
         }
       }
     }
-<<<<<<< HEAD
    }
-=======
-
->>>>>>> 434852ff392e8d08742ead60cca5b6eab14828be
   }
 }
     }
