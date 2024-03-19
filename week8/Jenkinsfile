@@ -1,6 +1,6 @@
 //This file is a script in "some language" to do stuff with a pipeline.
        script {
-          env.BRANCH_NAME = "main"
+          env.BRANCH_NAME = "feature"
           echo "FRED  ${env.BRANCH_NAME}"
         }  
 pipeline {
@@ -120,8 +120,8 @@ pipeline {
       script {
         env.CONTAINER_NAME = ''
         env.CONTAINER_REPO = 'meadowlark1'
-        if ( env.BRANCH_NAME == 'main' )       { env.CONTAINER_NAME = 'calculator:1.0' }
-        if ( env.BRANCH_NAME == 'feature' )    { env.CONTAINER_NAME = 'calculator-feature:0.1' }
+        if ( env.BRANCH_NAME == 'main' )       { env.CONTAINER_NAME = 'kaniko-calculator:1.0' }
+        if ( env.BRANCH_NAME == 'feature' )    { env.CONTAINER_NAME = 'kaniko-calculator-feature:0.1' }
         if ( env.BRANCH_NAME == 'playground' ) { echo "Create no container." }
 
         if ( "${CONTAINER_NAME}" ) {
