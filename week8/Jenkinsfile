@@ -1,5 +1,8 @@
 //This file is a script in "some language" to do stuff with a pipeline.
- 
+       //script {
+          //env.BRANCH_NAME = "playground"
+         // echo "FRED  ${env.BRANCH_NAME}"
+        //}  
 pipeline {
   agent {
     kubernetes {
