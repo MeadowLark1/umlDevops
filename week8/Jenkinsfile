@@ -1,5 +1,4 @@
 //This file is a script in "some language" to do stuff with a pipeline.
- 
 pipeline {
   agent {
     kubernetes {
