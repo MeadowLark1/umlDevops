@@ -1,22 +1,53 @@
 //This file is a script in "some language" to do stuff with a pipeline.
-
+ 
 pipeline {
   agent {
     kubernetes {
-      // Define the pod template directly within the kubernetes agent
-      containerTemplate {
-        name 'gradle'
-        image 'gradle'
-        command 'sleep'
-        args '30d'
-      }
+      yaml """
+        apiVersion: v1
+        kind: Pod
+        spec:
+          containers:
+          - name: gradle
+            image: gradle
+            command:
+            - sleep
+            args:
+            - 99d
+            volumeMounts:
+            - name: shared-storage
+              mountPath: /mnt        
+          - name: kaniko
+            image: gcr.io/kaniko-project/executor:debug
+            command:
+            - sleep
+            args:
+            - 9999999
+            volumeMounts:
+            - name: shared-storage
+              mountPath: /mnt
+            - name: kaniko-secret
+              mountPath: /kaniko/.docker
+          restartPolicy: Never
+          volumes:
+          - name: shared-storage
+            persistentVolumeClaim:
+              claimName: jenkins-pvc-claim
+          - name: kaniko-secret
+            secret:
+                secretName: dockercred
+                items:
+                - key: .dockerconfigjson
+                  path: config.json
+      """
     }
   }
-
+  
   stages {
-    stage('Checkout code and prepare environment') {
+
+    stage('Checkout code and prepare environment.') {
       steps {
-        git url: 'https://github.com/MeadowLark1/Continuous-Delivery-with-Docker-and-Jenkins-Second-Edition.git', branch: 'master'
+        git url: 'https://github.com/meadowlark1/Continuous-Delivery-with-Docker-and-Jenkins-Second-Edition.git'
         sh """
           cd Chapter08/sample1
           chmod +x gradlew
@@ -24,99 +55,27 @@ pipeline {
       }
     }
 
-    stage('jacocoTestCoverageVerification') {
-	   when {
-	       branch "main"
-	   }
+    stage('jacocoTestCoverageVerification on main') {
+      when { 
+	    branch 'main' 
+	    }
       steps {
         sh """
-          cd Chapter08/sample1
-          ./gradlew test
+          cd Chapter08/sample1;
+          ./gradlew jacocoTestReport
           ./gradlew jacocoTestCoverageVerification
-        """  
-      }
-	  
-//only run in Main branch as that is where successful code is merged. 
-podTemplate(yaml: '''
-    apiVersion: v1
-    kind: Pod
-    spec:
-      containers:
-      - name: gradle
-        image: gradle
-        command:
-        - sleep
-        args:
-        - 99d
-        volumeMounts:
-        - name: shared-storage
-          mountPath: /mnt        
-      - name: kaniko
-        image: gcr.io/kaniko-project/executor:debug
-        command:
-        - sleep
-        args:
-        - 9999999
-        volumeMounts:
-        - name: shared-storage
-          mountPath: /mnt
-        - name: kaniko-secret
-          mountPath: /kaniko/.docker
-      restartPolicy: Never
-      volumes:
-      - name: shared-storage
-        persistentVolumeClaim:
-          claimName: jenkins-pvc-claim
-      - name: kaniko-secret
-        secret:
-            secretName: dockercred
-            items:
-            - key: .dockerconfigjson
-              path: config.json
-''') {
-  node(POD_LABEL) {
-    stage('Build a gradle project') {
-      git 'https://github.com/meadowlark1/Continuous-Delivery-with-Docker-and-Jenkins-Second-Edition.git'
-      container('gradle') {
-        stage('Build a gradle project') {
-          sh '''
-          cd Chapter08/sample1
-          sed -i 's/minimum = 0.2/minimum = 0.1/' build.gradle
-          sed -i '/checkstyle {/,/}/d' build.gradle 
-          sed -i '/checkstyle/d' build.gradle 
-          cat build.gradle
-          chmod +x gradlew
-          ./gradlew build
-          mv ./build/libs/calculator-0.0.1-SNAPSHOT.jar /mnt
-          '''
-        }
+        """
       }
     }
 
-    stage('Build Java Image') {
-      container('kaniko') {
-        stage('Build a gradle project') {
-          sh '''
-          echo 'FROM openjdk:8-jre' > Dockerfile
-          echo 'COPY ./calculator-0.0.1-SNAPSHOT.jar app.jar' >> Dockerfile
-          echo 'ENTRYPOINT ["java", "-jar", "app.jar"]' >> Dockerfile
-          mv /mnt/calculator-0.0.1-SNAPSHOT.jar .
-          /kaniko/executor --context `pwd` --destination meadowlark1/new-kaniko:2.0
-          '''
+    stage('JaCoCo checkstyle test on non-Main') {
+      when {
+        anyOf {
+          branch 'feature'
+          branch 'playground'
         }
       }
-    }
-
-  }
-}
-    }
-	
-	stage('JaCoCo checkstyle test') {
-	  when {
-	       branch "feature-*"
-		   //not { branch 'main' }	
-	   }
-    steps {
+      steps {
 	    sh """
           cd Chapter08/sample1
           ./gradlew jacocoTestReport
@@ -127,18 +86,67 @@ podTemplate(yaml: '''
           reportFiles: 'main.html',
           reportName: "JaCoCo Checkstyle"
         ]) 
-	  }	
-	}	
+      }
+    }
   }
-   post {
-    always {
-      echo 'pipeline complete.'
+
+  post {
+    always   {
+      echo 'Pipeline Complete'
+      script {
+        if ( env.BRANCH_NAME == 'main' ) {
+          // Code coverage test report.
+          // publishHTML (target: [
+          //   reportDir: 'Chapter08/sample1/build/reports/tests/test',
+          //   reportFiles: 'index.html',
+          //   reportName: "JaCoCo CC Report"
+          // ])
+        }
+        if (env.BRANCH_NAME == 'feature' || env.BRANCH_NAME == 'playground') {
+          // Unit test and static code analysis test report.
+          // publishHTML (target: [
+          //   reportDir: 'Chapter08/sample1/build/reports/checkstyle',
+          //   reportFiles: 'main.html',
+          //   reportName: "JaCoCo Checkstyle"
+          // ])
+        }
+      }
     }
-    success {
-      echo 'tests pass!'
+
+     success  {
+      script {
+        env.CONTAINER_NAME = ''
+        env.CONTAINER_REPO = 'meadowlark1'
+        if ( env.BRANCH_NAME == 'main' )       { env.CONTAINER_NAME = 'kaniko-calculator:1.0' }
+        if ( env.BRANCH_NAME == 'feature' )    { env.CONTAINER_NAME = 'kaniko-calculator-feature:0.1' }
+        if ( env.BRANCH_NAME == 'playground' ) { echo "Create no container." }
+
+        if ( "${CONTAINER_NAME}" ) {
+          container('gradle') {
+            sh '''
+              cd Chapter08/sample1
+              sed -i 's/minimum = 0.2/minimum = 0.1/' build.gradle
+              sed -i '/checkstyle {/,/}/d' build.gradle 
+              sed -i '/checkstyle/d' build.gradle 
+              cat build.gradle
+              chmod +x gradlew
+              ./gradlew build
+              mv ./build/libs/calculator-0.0.1-SNAPSHOT.jar /mnt
+            '''
+          }
+          container('kaniko') {
+            sh '''
+              echo 'FROM openjdk:8-jre' > Dockerfile
+              echo 'COPY ./calculator-0.0.1-SNAPSHOT.jar app.jar' >> Dockerfile
+              echo 'ENTRYPOINT ["java", "-jar", "app.jar"]' >> Dockerfile
+              mv /mnt/calculator-0.0.1-SNAPSHOT.jar .
+              /kaniko/executor --context `pwd` --destination ${CONTAINER_REPO}/${CONTAINER_NAME}
+            '''
+          }
+        }
+      }
+      echo 'tests pass'
     }
-    failure {
-      echo 'tests fail!'
-    }
+    failure  { echo 'tests failed' }
   }
 }
