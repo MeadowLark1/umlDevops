@@ -51,7 +51,7 @@ pipeline {
               && echo 'Divide Test Pass!' \
               || echo 'Divide Test Fail!'
             test $(curl calculator-service:8080/div?a=8\\&b=0) -eq 0 \
-              && echo 'Divide by Zero Test, cannot divide by Zero.' 
+              && echo 'Divide by Zero Test, this will not pass.' || || echo 'Failure! Divide by Zero Test, cannot divide by Zero.'
           '''
         }
       }
