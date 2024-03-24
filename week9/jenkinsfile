@@ -33,7 +33,7 @@ pipeline {
             chmod +x ./kubectl
             ./kubectl apply -f calculator.yaml
             ./kubectl apply -f hazelcast.yaml
-            //sleep 15
+            #sleep 15
           '''
         }
       }
@@ -44,14 +44,12 @@ pipeline {
         container('gradle') {
           sh '''
             cd Chapter09/sample3
-            # chmod +x gradlew
-            # ./gradlew acceptanceTest -Dcalculator.url=http://calculator-service:8080
             test $(curl calculator-service:8080/sum?a=6\\&b=2) -eq 8 \
               && echo 'Addition Test Pass!' \
               || echo 'Addition Test Failed!'
-           // test $(curl calculator-service:8080/div?a=8\\&b=2) -eq 4 \
-           //   && echo 'Divide Test Pass!' \
-           //   || echo 'Divide Test Fail!'
+            test $(curl calculator-service:8080/div?a=8\\&b=2) -eq 4 \
+              && echo 'Divide Test Pass!' \
+              || echo 'Divide Test Fail!'
             test $(curl calculator-service:8080/div?a=8\\&b=0) -eq 0 \
               && echo 'Divide by Zero Test, cannot divide by Zero.' 
           '''
@@ -71,9 +69,9 @@ pipeline {
           DEP_2=`./kubectl get deployment -o custom-columns=":metadata.name" --no-headers=true -l app=hazelcast`
           [[ ! -z "$DEP_1" ]] && ./kubectl delete deployment $DEP_1 || echo "error cannot delete calculator deployment."
           [[ ! -z "$DEP_2" ]] && ./kubectl delete deployment $DEP_2 || echo "error cannot delete hazelcast deployment."
-        //  ./kubectl get pod -n devops-tools
-        //  ./kubectl get services -n devops-tools
-        //  ./kubectl get deployments -n devops-tools
+        #  ./kubectl get pod -n devops-tools
+        #  ./kubectl get services -n devops-tools
+        #  ./kubectl get deployments -n devops-tools
         '''
       }
     }
